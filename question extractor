@@ -1,0 +1,45 @@
+# ✅ Install Dependencies
+!pip install pdfplumber langchain sentence-transformers faiss-cpu scikit-learn numpy
+
+
+# ✅ Imports
+import pdfplumber
+from langchain.text_splitter import RecursiveCharacterTextSplitter
+from sentence_transformers import SentenceTransformer
+from sklearn.preprocessing import normalize
+import faiss
+import numpy as np
+import pickle
+from PIL import Image, ImageDraw
+import io
+import json
+import re
+from google.colab import files
+
+
+# ✅ Improved Question Extractor
+def extract_questions(conversation_data):
+    questions = []
+    question_starters = {"what", "how", "when", "can", "is", "do", "does", "are", "where", "why", "will", "shall", "could", "would", "should"}
+
+    for entry in conversation_data:
+        if entry.get("speaker", "").lower() == "customer":
+            text = entry.get("transcription", entry.get("text", "")).strip()
+            first_word = re.split(r"[ ,.!?]", text.lower())[0]
+            if "?" in text or first_word in question_starters or text.endswith("?"):
+                questions.append(text)
+
+    return questions
+
+
+# ✅ Upload JSON File and Print Only Customer Questions
+uploaded_json = files.upload()
+for filename in uploaded_json:
+    with open(filename, 'r', encoding='utf-8') as f:
+        conversation_data = json.load(f)
+
+questions = extract_questions(conversation_data)
+print(f"\n🎯 Detected {len(questions)} customer questions.\n")
+
+for i, q in enumerate(questions):
+    print(f"❓ Q{i+1}: {q}")
